@@ -15,5 +15,5 @@ continuous <- c(TRUE, TRUE, FALSE, FALSE, FALSE, TRUE)
 vimp.out <- Vimp(y = Y, x = X[,job.id], W = X[,-job.id], continuous = continuous[job.id],
                  no.bs = 50000)
 
-fname <- paste0("/home/ahudson/nplrt/data-example/nplrt-data-results-12-19-24_", job.id,".rda")
+fname <- paste0("actg_vimp", job.id,".rda")
 save(vimp.out, file = fname)

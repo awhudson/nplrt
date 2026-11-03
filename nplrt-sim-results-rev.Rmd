@@ -46,7 +46,7 @@ seed <- numeric(tot.reps/no.reps)
 
 <!-- ```{r} -->
 <!-- for(i in (1:500)) { -->
-<!--   fname <- paste0("/Users/awhudson/Dropbox/MethodsWork-Faculty/BoundaryNull/Code/Results-Rev/nplrt-results-rev2-", -->
+<!--   fname <- paste0("nplrt-results-", -->
 <!--                   i, ".rda") -->
 <!--   load(fname) -->
 

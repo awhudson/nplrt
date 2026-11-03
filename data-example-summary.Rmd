@@ -10,13 +10,11 @@ knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
 ```
 
 ```{r load_dat}
-# amp_1 <- read.csv("/Users/awhudson/Dropbox/MethodsWork-Faculty/BoundaryNull/Data/amp-1.csv")
 set.seed(206)
 require(speff2trial)
 source("~/Dropbox/MethodsWork-Faculty/BoundaryNull/Code/nplrt-vimp-rev.R")
 data(ACTG175)
 dat.actg <- subset(ACTG175, cd40 > 0)
-# data.actg <- subset(ACTG175, )
 ```
 
 ```{r data}
@@ -33,7 +31,7 @@ ci.upper <- numeric(6)
 p.val <- numeric(6)
 vimp.out.list <- list()
 for(i in 1:ncol(X)) {
-  load(paste0("/Users/awhudson/Dropbox/MethodsWork-Faculty/BoundaryNull/Code/Data-Results/nplrt-data-results-12-19-24", i, ".rda"))
+  load("") # load data-analysis results from nplrt-data-example.R
   vimp.out.list[[i]] <- vimp.out
   estimate[i] <- vimp.out$estimate
   ci.lower[i] <- vimp.out$ci.lower

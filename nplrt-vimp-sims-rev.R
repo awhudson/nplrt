@@ -245,5 +245,5 @@ keep <- list(p.vals.oracle = p.vals.oracle,
              oracle.roughness = oracle.roughness,
              seed = seed)
 
-fname <- paste0("/home/ahudson/nplrt/results-rev/out-11-28-24/nplrt-results-rev3-", job.id, ".rda")
+fname <- paste0("nplrt-results-", job.id, ".rda")
 save(keep, file = fname)

@@ -8,4 +8,4 @@
 #SBATCH --mail-user=ahudson@fredhutch.org
 
 ml fhR 
-Rscript /home/ahudson/nplrt/nplrt-vimp-sims.R
+Rscript nplrt-vimp-sims.R

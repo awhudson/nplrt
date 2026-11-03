@@ -1,0 +1,579 @@
+---
+title: "REGRET  Sims 7-4-22"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE)
+library(latex2exp)
+```
+
+```{r}
+tot.reps <- 500
+no.reps <- 1
+ns <- c(100, 200, 400, 800, 1600)
+
+p.vals.oracle <- array(NA, dim = c(tot.reps, length(ns), 3))
+p.vals.adap <- array(NA, dim = c(tot.reps, length(ns), 3))
+p.vals.split <- array(NA, dim = c(tot.reps, length(ns), 3))
+
+ests.oracle <- array(NA, dim = c(tot.reps, length(ns), 3))
+ests.adap <- array(NA, dim = c(tot.reps, length(ns), 3))
+ests.oracle.debias <- array(NA, dim = c(tot.reps, length(ns), 3))
+ests.adap.debias <- array(NA, dim = c(tot.reps, length(ns), 3))
+ests.split <- array(NA, dim = c(tot.reps, length(ns), 3))
+
+ci.lower.oracle <- array(NA, dim = c(tot.reps, length(ns), 3))
+ci.lower.adap <- array(NA, dim = c(tot.reps, length(ns), 3))
+ci.lower.oracle.debias <- array(NA, dim = c(tot.reps, length(ns), 3))
+ci.lower.adap.debias <- array(NA, dim = c(tot.reps, length(ns), 3))
+ci.lower.split <- array(NA, dim = c(tot.reps, length(ns), 3))
+
+ci.upper.oracle <- array(NA, dim = c(tot.reps, length(ns), 3))
+ci.upper.adap <- array(NA, dim = c(tot.reps, length(ns), 3))
+ci.upper.oracle.debias <- array(NA, dim = c(tot.reps, length(ns), 3))
+ci.upper.adap.debias <- array(NA, dim = c(tot.reps, length(ns), 3))
+ci.upper.split <- array(NA, dim = c(tot.reps, length(ns), 3))
+
+roughness.adap <- array(NA, dim = c(tot.reps, length(ns), 3))
+true.iif.mc <- matrix(NA, nrow = tot.reps/no.reps * 2, ncol = 3)
+
+seed <- numeric(tot.reps/no.reps)
+```
+
+
+<!-- ```{r} -->
+<!-- for(i in (1:500)) { -->
+<!--   fname <- paste0("/Users/awhudson/Dropbox/MethodsWork-Faculty/BoundaryNull/Code/Results-Rev/nplrt-results-rev2-", -->
+<!--                   i, ".rda") -->
+<!--   load(fname) -->
+
+<!--   j <- ((i - 1) * no.reps + 1):(i * no.reps) -->
+
+<!--   p.vals.oracle[j,,] <- keep$p.vals.oracle -->
+<!--   p.vals.adap[j,,] <- keep$p.vals.adap -->
+<!--   p.vals.split[j,,] <- keep$p.vals.split -->
+
+<!--   ests.oracle[j,,] <- keep$ests.oracle -->
+<!--   ests.adap[j,,] <- keep$ests.adap -->
+<!--   ests.split[j,,] <- keep$ests.split -->
+<!--   ests.oracle.debias[j,,] <- keep$ests.oracle.debias -->
+<!--   ests.adap.debias[j,,] <- keep$ests.adap.debias -->
+
+<!--   ci.lower.oracle[j,,] <- keep$ci.lower.oracle -->
+<!--   ci.lower.adap[j,,] <- keep$ci.lower.adap -->
+<!--   ci.lower.oracle.debias[j,,] <- keep$ci.lower.oracle.debias -->
+<!--   ci.lower.adap.debias[j,,] <- keep$ci.lower.adap.debias -->
+<!--   ci.lower.split[j,,] <- keep$ci.lower.split -->
+
+<!--   ci.upper.oracle[j,,] <- keep$ci.upper.oracle -->
+<!--   ci.upper.adap[j,,] <- keep$ci.upper.adap -->
+<!--   ci.upper.oracle.debias[j,,] <- keep$ci.upper.oracle.debias -->
+<!--   ci.upper.adap.debias[j,,] <- keep$ci.upper.adap.debias -->
+<!--   ci.upper.split [j,,] <- keep$ci.upper.split -->
+
+<!--   roughness.adap[j,,] <- keep$roughness.adap -->
+<!--   true.iif.mc[i,] <- keep$true.iif -->
+<!-- } -->
+
+<!-- true.iif <- apply(true.iif.mc, 2, mean) -->
+<!-- ``` -->
+
+
+```{r}
+for(i in (1:500)) {
+  fname <- paste0("/Users/awhudson/Dropbox/MethodsWork-Faculty/BoundaryNull/Code/Results-1-15-25/nplrt-results-1-03-25-",
+                  i, ".rda")
+  load(fname)
+  
+  j <- ((i - 1) * no.reps + 1):(i * no.reps)
+  
+  p.vals.oracle[j,1:3,] <- keep$p.vals.oracle
+  p.vals.adap[j,1:3,] <- keep$p.vals.adap
+  p.vals.split[j,1:3,] <- keep$p.vals.split
+  
+  ests.oracle[j,1:3,] <- keep$ests.oracle
+  ests.adap[j,1:3,] <- keep$ests.adap
+  ests.split[j,1:3,] <- keep$ests.split
+  ests.oracle.debias[j,1:3,] <- keep$ests.oracle.debias
+  ests.adap.debias[j,1:3,] <- keep$ests.adap.debias
+  
+  ci.lower.oracle[j,1:3,] <- keep$ci.lower.oracle
+  ci.lower.adap[j,1:3,] <- keep$ci.lower.adap
+  ci.lower.oracle.debias[j,1:3,] <- keep$ci.lower.oracle.debias
+  ci.lower.adap.debias[j,1:3,] <- keep$ci.lower.adap.debias
+  ci.lower.split[j,1:3,] <- keep$ci.lower.split
+  
+  ci.upper.oracle[j,1:3,] <- keep$ci.upper.oracle
+  ci.upper.adap[j,1:3,] <- keep$ci.upper.adap
+  ci.upper.oracle.debias[j,1:3,] <- keep$ci.upper.oracle.debias
+  ci.upper.adap.debias[j,1:3,] <- keep$ci.upper.adap.debias
+  ci.upper.split [j,1:3,] <- keep$ci.upper.split
+  
+  roughness.adap[j,1:3,] <- keep$roughness.adap
+  true.iif.mc[i,] <- keep$true.iif
+}
+
+```
+
+
+```{r}
+for(i in (1:500)) {
+  fname <- paste0("/Users/awhudson/Dropbox/MethodsWork-Faculty/BoundaryNull/Code/Results-1-15-25/nplrt-results-1-03-25-",
+                  500 + i, ".rda")
+  load(fname)
+  
+  j <- i# + 500#((i - 1) * no.reps + 1):(i * no.reps)
+  
+  p.vals.oracle[j,4:5,] <- keep$p.vals.oracle
+  p.vals.adap[j,4:5,] <- keep$p.vals.adap
+  p.vals.split[j,4:5,] <- keep$p.vals.split
+  
+  ests.oracle[j,4:5,] <- keep$ests.oracle
+  ests.adap[j,4:5,] <- keep$ests.adap
+  ests.split[j,4:5,] <- keep$ests.split
+  ests.oracle.debias[j,4:5,] <- keep$ests.oracle.debias
+  ests.adap.debias[j,4:5,] <- keep$ests.adap.debias
+  
+  ci.lower.oracle[j,4:5,] <- keep$ci.lower.oracle
+  ci.lower.adap[j,4:5,] <- keep$ci.lower.adap
+  ci.lower.oracle.debias[j,4:5,] <- keep$ci.lower.oracle.debias
+  ci.lower.adap.debias[j,4:5,] <- keep$ci.lower.adap.debias
+  ci.lower.split[j,4:5,] <- keep$ci.lower.split
+  
+  ci.upper.oracle[j,4:5,] <- keep$ci.upper.oracle
+  ci.upper.adap[j,4:5,] <- keep$ci.upper.adap
+  ci.upper.oracle.debias[j,4:5,] <- keep$ci.upper.oracle.debias
+  ci.upper.adap.debias[j,4:5,] <- keep$ci.upper.adap.debias
+  ci.upper.split [j,4:5,] <- keep$ci.upper.split
+  
+  roughness.adap[j,4:5,] <- keep$roughness.adap
+  true.iif.mc[i+500,] <- keep$true.iif
+}
+
+true.iif <- apply(true.iif.mc, 2, mean)
+```
+
+```{r plotType1Control}
+plot.reject <- function(p.vals, main, ns) {
+  alpha <- seq(0, 1, length.out = 100)
+  type.1 <- matrix(NA, nrow = 100, ncol = ncol(p.vals))
+  for(i in 1:100) {
+    for(j in 1:ncol(p.vals)) {
+      type.1[i,j] <- mean(p.vals[,j] < alpha[i], na.rm = TRUE)
+    }
+  }
+  cols <- c("red", "blue", "green", "orange", "pink", "purple")
+  plot(0, 0, type = "n", main = main, xlab = "Nominal Type-1 Error Level",
+       ylab = "Rejection Probability", xlim = c(0, 1), ylim = c(0, 1))
+  for(j in 1:ncol(p.vals)) {
+    lines(alpha, type.1[,j], lwd = 2, col = cols[j])
+  }
+  abline(a = 0, b = 1, lty = 3, lwd = 4)
+}
+
+m <- matrix(c(1,2,3,4),nrow = 2,ncol = 2,byrow = TRUE)
+layout(mat = m,heights = c(0.3,0.3))
+par(mar = c(4,4,2,1))
+
+plot.reject(p.vals = p.vals.oracle[,,1], main = "Null (Oracle)", ns = ns)
+plot.reject(p.vals = p.vals.adap[,,1], main = "Null (Adaptive)", ns = ns)
+plot.reject(p.vals = p.vals.split[,,1], main = "Null (Split)", ns = ns)
+
+plot.new()
+cols <- c("red", "blue", "green", "orange", "pink", "purple")
+legend("center", lty = rep(1, 4), lwd = rep(2, 4),
+       legend = paste0("n = ", ns) , col = cols)
+```
+
+
+```{r plotPower-V2}
+m <- matrix(c(1,2,3,4,5,6,7,7,7),nrow = 3,ncol = 3,byrow = TRUE)
+layout(mat = m,heights = c(0.25,0.25, .2))
+par(mar = c(4,4,2,1))
+
+plot.reject(p.vals = p.vals.oracle[,,2], main = "Alt (Oracle; X1)", ns = ns)
+plot.reject(p.vals = p.vals.adap[,,2], main = "Alt (Adaptive; X1)", ns = ns)
+plot.reject(p.vals = p.vals.split[,,2], main = "Alt (Split; X1)", ns = ns)
+
+plot.reject(p.vals = p.vals.oracle[,,3], main = "Alt (Oracle; X2)", ns = ns)
+plot.reject(p.vals = p.vals.adap[,,3], main = "Alt (Adaptive; X2)", ns = ns)
+plot.reject(p.vals = p.vals.split[,,3], main = "Alt (Split; X2)", ns = ns)
+
+plot.new()
+cols <- c("salmon", "blue", "green", "orange", "pink", "purple")
+legend("center", lty = rep(1, 4), lwd = rep(2, 4),
+       legend = paste0("n = ", ns) , col = cols, horiz = TRUE)
+```
+
+```{r plotReject}
+m <- matrix(c(1,2,3,4,5,6,7,7,7),nrow = 3,ncol = 3,byrow = TRUE)
+layout(mat = m,heights = c(0.3, 0.3, .2))
+par(mar = c(4,4,2,1))
+
+plot.reject(p.vals = p.vals.oracle[,,1], main = "Null (Oracle)", ns = ns)
+plot.reject(p.vals = p.vals.adap[,,1], main = "Null (Adaptive)", ns = ns)
+plot.reject(p.vals = p.vals.split[,,1], main = "Null (Split)", ns = ns)
+
+plot.reject(p.vals = p.vals.oracle[,,3], main = "Alt (Oracle)", ns = ns)
+plot.reject(p.vals = p.vals.adap[,,3], main = "Alt (Adaptive)", ns = ns)
+plot.reject(p.vals = p.vals.split[,,3], main = "Alt (Split)", ns = ns)
+
+plot.new()
+cols <- c("salmon", "blue", "green", "orange", "pink", "purple")
+legend("center", lty = rep(1, 4), lwd = rep(2, 4),
+       legend = paste0("n = ", ns) , col = cols, horiz = TRUE, xpd = TRUE)
+```
+
+```{r IntervalSummary}
+
+TestSummary <- function(alpha = .05, k, p.vals) {
+  apply(p.vals[,,k], 2, function(x) mean(x < alpha, na.rm = TRUE))
+}
+
+ErrorSummary <- function(ests, k, true.iif) {
+  E <- matrix(NA, nrow = dim(ests)[1], ncol = dim(ests)[2])
+  for(i in 1:nrow(E)) {
+    for(j in 1:ncol(E)) {
+      E[i,j] <- (ests[i,j,k] - true.iif[k])^2
+    }
+  }
+  out <- apply(E, 2, mean, na.rm = TRUE)^(1/2)
+  return(out)
+}
+
+IntervalSummary <- function(ci.lower, ci.upper, k) {
+  C <- matrix(NA, nrow = dim(ci.lower)[1], ncol = dim(ci.lower)[2])
+  width <- matrix(NA, nrow = dim(ci.lower)[1], ncol = dim(ci.lower)[2])
+  for(i in 1:nrow(C)) {
+    for(j in 1:ncol(C)) {
+      C[i,j] <- ifelse(true.iif[k] >= ci.lower[i,j,k] & 
+                       true.iif[k] <= ci.upper[i,j,k],
+                       1, 0)
+      width[i,j] <- ci.upper[i,j,k] - ci.lower[i,j,k]
+    }
+  }
+  out <- list(cover = C,
+              coverage = apply(C, 2, mean, na.rm = TRUE),
+              width = width,
+              avg.width = apply(width, 2, mean, na.rm = TRUE))
+  return(out)
+}
+
+PlotError <- function(error.mat, ns, main = "", ylim = c(0, 5)) {
+  plot(x = c(1, length(ns)), y = c(0, 1), type = "n",
+       ylim = ylim, xaxt = "n",
+       xlab = "n", ylab = "RMSE", main = main)
+  axis(side = 1, at = 1:length(ns), label = ns)
+
+  lines(1:length(ns), error.mat[1,], lwd = .5, col = "red")
+  lines(1:length(ns), error.mat[2,], lwd = .5, col = "blue")
+  lines(1:length(ns), error.mat[3,], lwd = .5, col = "green")
+  
+  points(1:length(ns), error.mat[1,], bg = "red", pch = 21)
+  points(1:length(ns), error.mat[2,], bg = "blue", pch = 21)
+  points(1:length(ns), error.mat[3,], bg = "green", pch = 21)
+}
+
+PlotCoverage <- function(coverage.mat, ns, main = "") {
+  plot(x = c(1, length(ns)), y = c(.5, 1), type = "n",
+       ylim = c(.5, 1), xaxt = "n",
+       xlab = "n", ylab = "Coverage", main = main)
+  axis(side = 1, at = 1:length(ns), label = ns)
+  abline(h = .95, col = "grey", lty = 2, lwd = 1.5)
+  
+  lines(1:length(ns), coverage.mat[1,], lwd = .5, col = "red")
+  lines(1:length(ns), coverage.mat[2,], lwd = .5, col = "blue")
+  lines(1:length(ns), coverage.mat[3,], lwd = .5, col = "green")
+  
+  points(1:length(ns), coverage.mat[1,], bg = "red", pch = 21)
+  points(1:length(ns), coverage.mat[2,], bg = "blue", pch = 21)
+  points(1:length(ns), coverage.mat[3,], bg = "green", pch = 21)
+}
+
+PlotWidth <- function(width.mat, ns, main = "", ylim = c(0, .5)) {
+  plot(x = c(1, length(ns)), y = c(0, 1), type = "n",
+       ylim = ylim, xaxt = "n",
+       xlab = "n", ylab = "Width", main = main)
+  axis(side = 1, at = 1:length(ns), label = ns)
+
+  lines(1:length(ns), width.mat[1,], lwd = .5, col = "red")
+  lines(1:length(ns), width.mat[2,], lwd = .5, col = "blue")
+  lines(1:length(ns), width.mat[3,], lwd = .5, col = "green")
+  
+  points(1:length(ns), width.mat[1,], bg = "red", pch = 21)
+  points(1:length(ns), width.mat[2,], bg = "blue", pch = 21)
+  points(1:length(ns), width.mat[3,], bg = "green", pch = 21)
+}
+
+PlotTest <- function(test.mat, ns, main = "", ylim = c(0, .15), null = TRUE) {
+  plot(x = c(1, length(ns)), y = c(0, 1), type = "n",
+       ylim = ylim, xaxt = "n",
+       xlab = "n", ylab = "Rejection Probability", main = main)
+  axis(side = 1, at = 1:length(ns), label = ns)
+  
+  if(null) abline(h = .05, lwd = 2, lty = 2, col = "gray")
+
+  lines(1:length(ns), test.mat[1,], lwd = .5, col = "red")
+  lines(1:length(ns), test.mat[2,], lwd = .5, col = "blue")
+  lines(1:length(ns), test.mat[3,], lwd = .5, col = "green")
+  
+  points(1:length(ns), test.mat[1,], bg = "red", pch = 21)
+  points(1:length(ns), test.mat[2,], bg = "blue", pch = 21)
+  points(1:length(ns), test.mat[3,], bg = "green", pch = 21)
+}
+
+test.Setting1 <- rbind(TestSummary(.05, 1, p.vals.oracle),
+                       TestSummary(.05, 1, p.vals.adap),
+                       TestSummary(.05, 1, p.vals.split))
+
+test.Setting2 <- rbind(TestSummary(.05, 2, p.vals.oracle),
+                       TestSummary(.05, 2, p.vals.adap),
+                       TestSummary(.05, 2, p.vals.split))
+
+test.Setting3 <- rbind(TestSummary(.05, 3, p.vals.oracle),
+                       TestSummary(.05, 3, p.vals.adap),
+                       TestSummary(.05, 3, p.vals.split))
+
+error.Setting1 <- rbind(ErrorSummary(ests.oracle, 1, true.iif),
+                        ErrorSummary(ests.adap, 1, true.iif),
+                        ErrorSummary(ests.split, 1, true.iif))
+error.Setting2 <- rbind(ErrorSummary(ests.oracle, 2, true.iif),
+                        ErrorSummary(ests.adap, 2, true.iif),
+                        ErrorSummary(ests.split, 2, true.iif))
+error.Setting3 <- rbind(ErrorSummary(ests.oracle, 3, true.iif),
+                        ErrorSummary(ests.adap, 3, true.iif),
+                        ErrorSummary(ests.split, 3, true.iif))
+
+oracle.Setting1.interval <- IntervalSummary(ci.lower.oracle, ci.upper.oracle, k = 1)
+oracle.Setting2.interval <- IntervalSummary(ci.lower.oracle, ci.upper.oracle, k = 2)
+oracle.Setting3.interval <- IntervalSummary(ci.lower.oracle, ci.upper.oracle, k = 3)
+
+adap.Setting1.interval <- IntervalSummary(ci.lower.adap, ci.upper.adap, k = 1)
+adap.Setting2.interval <- IntervalSummary(ci.lower.adap, ci.upper.adap, k = 2)
+adap.Setting3.interval <- IntervalSummary(ci.lower.adap, ci.upper.adap, k = 3)
+
+oracle.debias.Setting1.interval <- IntervalSummary(ci.lower.oracle.debias, ci.upper.oracle.debias, k = 1)
+oracle.debias.Setting2.interval <- IntervalSummary(ci.lower.oracle.debias, ci.upper.oracle.debias, k = 2)
+oracle.debias.Setting3.interval <- IntervalSummary(ci.lower.oracle.debias, ci.upper.oracle.debias, k = 3)
+
+adap.debias.Setting1.interval <- IntervalSummary(ci.lower.adap.debias, ci.upper.adap.debias, k = 1)
+adap.debias.Setting2.interval <- IntervalSummary(ci.lower.adap.debias, ci.upper.adap.debias, k = 2)
+adap.debias.Setting3.interval <- IntervalSummary(ci.lower.adap.debias, ci.upper.adap.debias, k = 3)
+
+split.Setting1.interval <- IntervalSummary(ci.lower.split, ci.upper.split, k = 1)
+split.Setting2.interval <- IntervalSummary(ci.lower.split, ci.upper.split, k = 2)
+split.Setting3.interval <- IntervalSummary(ci.lower.split, ci.upper.split, k = 3)
+
+coverage.mat.Setting1 <- rbind(oracle.Setting1.interval$coverage,
+                         adap.Setting1.interval$coverage,
+                         split.Setting1.interval$coverage)
+coverage.mat.Setting2 <- rbind(oracle.Setting2.interval$coverage,
+                         adap.Setting2.interval$coverage,
+                         split.Setting2.interval$coverage)
+coverage.mat.Setting3 <- rbind(oracle.Setting3.interval$coverage,
+                         adap.Setting3.interval$coverage,
+                         split.Setting3.interval$coverage)
+
+width.mat.Setting1 <- rbind(oracle.Setting1.interval$avg.width,
+                         adap.Setting1.interval$avg.width,
+                         split.Setting1.interval$avg.width)
+width.mat.Setting2 <- rbind(oracle.Setting2.interval$avg.width,
+                         adap.Setting2.interval$avg.width,
+                         split.Setting2.interval$avg.width)
+width.mat.Setting3 <- rbind(oracle.Setting3.interval$avg.width,
+                         adap.Setting3.interval$avg.width,
+                         split.Setting3.interval$avg.width)
+```
+
+```{r}
+m <- matrix(c(1,2,3,4,5,6,7,8,9,9,9,9),nrow = 3,ncol = 4,byrow = TRUE)
+layout(mat = m,heights = c(0.3, 0.3, .2))
+par(mar = c(4,4,2,1))
+
+PlotTest(test.Setting1, ns, main = "Reject Prob (Null)", ylim = c(0,.5), null = TRUE)
+PlotError(error.Setting1, ns, main = "RMSE (Null)", ylim = c(0, 3))
+PlotCoverage(coverage.mat.Setting1, ns, main = "Coverage (Null)")
+PlotWidth(width.mat.Setting1, ns, main = "Avg width (Null)", ylim = c(0, 12))
+
+PlotTest(test.Setting3, ns, main = "Reject Prob (Alt)", ylim = c(0,1), null = TRUE)
+PlotError(error.Setting3, ns, main = "RMSE (Alt)", ylim = c(0, 3))
+PlotCoverage(coverage.mat.Setting3, ns, main = "Coverage (Alt)")
+PlotWidth(width.mat.Setting3, ns, main = "Avg width (Alt)", ylim = c(0, 12))
+
+plot.new()
+cols <- c("red", "blue", "green")
+legend("center", pch = rep(21, 3),
+       legend = c("Oracle", "Adaptive", "Splitting"),
+       pt.bg = cols, horiz = TRUE, xpd = TRUE)
+```
+
+<!-- # ```{r plotCoverage} -->
+<!-- # m <- matrix(c(1,2,3,4),nrow = 2,ncol = 2,byrow = TRUE) -->
+<!-- # layout(mat = m,heights = c(0.3,0.3)) -->
+<!-- # par(mar = c(4,4,2,1)) -->
+<!-- # -->
+<!-- # coverage.mat.X1 <- rbind(oracle.X1.interval$coverage, -->
+<!-- #                          adap.X1.interval$coverage, -->
+<!-- #                          split.X1.interval$coverage) -->
+<!-- # coverage.mat.X2 <- rbind(oracle.X2.interval$coverage, -->
+<!-- #                          adap.X2.interval$coverage, -->
+<!-- #                          split.X2.interval$coverage) -->
+<!-- # coverage.mat.X3 <- rbind(oracle.X3.interval$coverage, -->
+<!-- #                          adap.X3.interval$coverage, -->
+<!-- #                          split.X3.interval$coverage) -->
+<!-- # -->
+<!-- # PlotCoverage(coverage.mat.X1, ns, main = "Coverage (X1; Alt)") -->
+<!-- # PlotCoverage(coverage.mat.X2, ns, main = "Coverage (X2; Alt)") -->
+<!-- # PlotCoverage(coverage.mat.X3, ns, main = "Coverage (X3; Null)") -->
+<!-- # -->
+<!-- # plot.new() -->
+<!-- # cols <- c("red", "blue", "green") -->
+<!-- # legend("center", pch = rep(21, 3), -->
+<!-- #        legend = c("Oracle", "Adaptive", "Splitting"), -->
+<!-- #        pt.bg = cols) -->
+<!-- # ``` -->
+<!-- # -->
+<!-- # -->
+<!-- # -->
+<!-- # -->
+<!-- # ```{r plotWidth} -->
+<!-- # PlotWidth <- function(width.mat, ns, main = "", ylim = c(0, .5)) { -->
+<!-- #   plot(x = c(1, length(ns)), y = c(0, 1), type = "n", -->
+<!-- #        ylim = ylim, xaxt = "n", -->
+<!-- #        xlab = "N", ylab = "Width", main = main) -->
+<!-- #   axis(side = 1, at = 1:length(ns), label = ns) -->
+<!-- # -->
+<!-- #   lines(1:length(ns), width.mat[1,], lwd = .5, col = "red") -->
+<!-- #   lines(1:length(ns), width.mat[2,], lwd = .5, col = "blue") -->
+<!-- #   lines(1:length(ns), width.mat[3,], lwd = .5, col = "green") -->
+<!-- # -->
+<!-- #   points(1:length(ns), width.mat[1,], bg = "red", pch = 21) -->
+<!-- #   points(1:length(ns), width.mat[2,], bg = "blue", pch = 21) -->
+<!-- #   points(1:length(ns), width.mat[3,], bg = "green", pch = 21) -->
+<!-- # } -->
+<!-- # -->
+<!-- # m <- matrix(c(1,2,3,4),nrow = 2,ncol = 2,byrow = TRUE) -->
+<!-- # layout(mat = m,heights = c(0.3,0.3)) -->
+<!-- # par(mar = c(4,4,2,1)) -->
+<!-- # -->
+<!-- # width.mat.X1 <- rbind(oracle.X1.interval$avg.width, -->
+<!-- #                          adap.X1.interval$avg.width, -->
+<!-- #                          split.X1.interval$avg.width) -->
+<!-- # width.mat.X2 <- rbind(oracle.X2.interval$avg.width, -->
+<!-- #                          adap.X2.interval$avg.width, -->
+<!-- #                          split.X2.interval$avg.width) -->
+<!-- # width.mat.X3 <- rbind(oracle.X3.interval$avg.width, -->
+<!-- #                          adap.X3.interval$avg.width, -->
+<!-- #                          split.X3.interval$avg.width) -->
+<!-- # -->
+<!-- # PlotWidth(width.mat.X1, ns, main = "Average width (X1; Alt)", ylim = c(0, 8)) -->
+<!-- # PlotWidth(width.mat.X2, ns, main = "Average width (X2; Alt)", ylim = c(0, 8)) -->
+<!-- # PlotWidth(width.mat.X3, ns, main = "Average width (X3; Null)", ylim = c(0, 8)) -->
+<!-- # -->
+<!-- # plot.new() -->
+<!-- # cols <- c("red", "blue", "green") -->
+<!-- # legend("center", pch = rep(21, 3), -->
+<!-- #        legend = c("Oracle", "Adaptive", "Splitting"), -->
+<!-- #        pt.bg = cols) -->
+<!-- # ``` -->
+
+
+<!-- ```{r plotRMSE} -->
+<!-- ErrorSummary <- function(ests, k, true.iif) { -->
+<!--   E <- matrix(NA, nrow = dim(ests)[1], ncol = dim(ests)[2]) -->
+<!--   for(i in 1:nrow(E)) { -->
+<!--     for(j in 1:ncol(E)) { -->
+<!--       E[i,j] <- (ests[i,j,k] - true.iif[k])^2 -->
+<!--     } -->
+<!--   } -->
+<!--   out <- apply(E, 2, mean, na.rm = TRUE)^(1/2) -->
+<!--   return(out) -->
+<!-- } -->
+
+<!-- PlotError <- function(error.mat, ns, main = "", ylim = c(0, 5)) { -->
+<!--   plot(x = c(1, length(ns)), y = c(0, 1), type = "n", -->
+<!--        ylim = ylim, xaxt = "n", -->
+<!--        xlab = "N", ylab = "RMSE", main = main) -->
+<!--   axis(side = 1, at = 1:length(ns), label = ns) -->
+
+<!--   lines(1:length(ns), error.mat[1,], lwd = .5, col = "red") -->
+<!--   lines(1:length(ns), error.mat[2,], lwd = .5, col = "blue") -->
+<!--   lines(1:length(ns), error.mat[3,], lwd = .5, col = "green") -->
+
+<!--   points(1:length(ns), error.mat[1,], bg = "red", pch = 21) -->
+<!--   points(1:length(ns), error.mat[2,], bg = "blue", pch = 21) -->
+<!--   points(1:length(ns), error.mat[3,], bg = "green", pch = 21) -->
+<!-- } -->
+
+<!-- error.mat.X1 <- rbind(ErrorSummary(ests.oracle, 1, true.iif), -->
+<!--                       ErrorSummary(ests.adap, 1, true.iif), -->
+<!--                       ErrorSummary(ests.split, 1, true.iif)) -->
+<!-- error.mat.X2 <- rbind(ErrorSummary(ests.oracle, 2, true.iif), -->
+<!--                       ErrorSummary(ests.adap, 2, true.iif), -->
+<!--                       ErrorSummary(ests.split, 2, true.iif)) -->
+<!-- error.mat.X3 <- rbind(ErrorSummary(ests.oracle, 3, true.iif), -->
+<!--                       ErrorSummary(ests.adap, 3, true.iif), -->
+<!--                       ErrorSummary(ests.split, 3, true.iif)) -->
+
+<!-- m <- matrix(c(1,2,3,4),nrow = 2,ncol = 2,byrow = TRUE) -->
+<!-- layout(mat = m,heights = c(0.3,0.3)) -->
+<!-- par(mar = c(4,4,2,1)) -->
+
+<!-- PlotError(error.mat.X1, ns, main = "RMSE (X1; Alt)", ylim = c(0, 4)) -->
+<!-- PlotError(error.mat.X2, ns, main = "RMSE (X2; Alt)", ylim = c(0, 4)) -->
+<!-- PlotError(error.mat.X3, ns, main = "RMSE (X3; Null)", ylim = c(0, 4)) -->
+
+<!-- plot.new() -->
+<!-- cols <- c("red", "blue", "green") -->
+<!-- legend("center", pch = rep(21, 3), -->
+<!--        legend = c("Oracle", "Adaptive", "Splitting"), -->
+<!--        pt.bg = cols) -->
+
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- TestSummary <- function(alpha = .05, k, p.vals) { -->
+<!--   apply(p.vals[,,k], 2, function(x) mean(x < alpha, na.rm = TRUE)) -->
+<!-- } -->
+
+<!-- TestMatX1 <- rbind(TestSummary(.05, 1, p.vals.oracle), -->
+<!--                    TestSummary(.05, 1, p.vals.adap), -->
+<!--                    TestSummary(.05, 1, p.vals.split)) -->
+
+<!-- TestMatX2 <- rbind(TestSummary(.05, 2, p.vals.oracle), -->
+<!--                    TestSummary(.05, 2, p.vals.adap), -->
+<!--                    TestSummary(.05, 2, p.vals.split)) -->
+
+<!-- TestMatX3 <- rbind(TestSummary(.05, 3, p.vals.oracle), -->
+<!--                    TestSummary(.05, 3, p.vals.adap), -->
+<!--                    TestSummary(.05, 3, p.vals.split)) -->
+
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- m <- matrix(c(1,2,3,4,5,6,7,8,9,9,9,9),nrow = 3,ncol = 4,byrow = TRUE) -->
+<!-- layout(mat = m,heights = c(0.3, 0.3, .2)) -->
+<!-- par(mar = c(4,4,2,1)) -->
+
+<!-- PlotError(TestMatX1, ns, main = "Rejection Prob", ylim = c(0,1)) -->
+<!-- PlotError(error.mat.X1, ns, main = "RMSE (X1; Alt)", ylim = c(0, 4)) -->
+<!-- PlotCoverage(coverage.mat.X1, ns, main = "Coverage (X1; Alt)") -->
+<!-- PlotWidth(width.mat.X1, ns, main = "Average width (X1; Alt)", ylim = c(0, 8)) -->
+
+<!-- PlotError(TestMatX3, ns, main = "Rejection Prob", ylim = c(0,1)) -->
+<!-- PlotError(error.mat.X3, ns, main = "RMSE (X1; Alt)", ylim = c(0, 4)) -->
+<!-- PlotCoverage(coverage.mat.X3, ns, main = "Coverage (X1; Alt)") -->
+<!-- PlotWidth(width.mat.X3, ns, main = "Average width (X1; Alt)", ylim = c(0, 8)) -->
+
+<!-- plot.new() -->
+<!-- cols <- c("red", "blue", "green") -->
+<!-- legend("center", pch = rep(21, 3), -->
+<!--        legend = c("Oracle", "Adaptive", "Splitting"), -->
+<!--        pt.bg = cols, horiz = TRUE, xpd = TRUE) -->
+
+<!-- ``` -->

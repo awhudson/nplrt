@@ -8,4 +8,4 @@
 #SBATCH --mail-user=ahudson@fredhutch.org
 
 ml fhR 
-Rscript /home/ahudson/nplrt/nplrt-data-example.R
+Rscript nplrt-data-example.R

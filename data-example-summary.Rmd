@@ -31,7 +31,7 @@ ci.upper <- numeric(6)
 p.val <- numeric(6)
 vimp.out.list <- list()
 for(i in 1:ncol(X)) {
-  load("") # load data-analysis results from nplrt-data-example.R
+  load("ACTG_vimp.rda") # load data-analysis results from nplrt-data-example.R
   vimp.out.list[[i]] <- vimp.out
   estimate[i] <- vimp.out$estimate
   ci.lower[i] <- vimp.out$ci.lower
